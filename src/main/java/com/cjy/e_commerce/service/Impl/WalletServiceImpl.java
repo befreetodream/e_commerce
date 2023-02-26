@@ -43,15 +43,19 @@ public class WalletServiceImpl extends ServiceImpl<WalletMapper, Wallet> impleme
         }
         Result result = search();
         Wallet wallet = (Wallet) result.getData();
-        //判断余额是否可以消费
-        if (wallet.getBalance()<n){
-            return Result.error("余额不足");
+        //根据不同线程id上锁
+        synchronized (uid.toString()){
+            //判断余额是否可以消费
+            if (wallet.getBalance()<n){
+                return Result.error("余额不足");
+            }
+            walletMapper.opsMoney(n,wallet.getId());
         }
-        walletMapper.opsMoney(n,wallet.getId());
         Detail detail = new Detail();
         detail.setUid(uid);
         detail.setDescription("消费");
         detailService.save(detail);
+
         return Result.ok();
     }
 
